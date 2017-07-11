@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.1" halcon_version="13.0">
+<procedure name="main">
+<interface/>
+<body>
+<c>*</c>
+<c>* 外部HDD保存の新ピッキング部画像からSVMに用いる特徴量を抽出する</c>
+<c>* 2017/07/11 北九州高専　穴井</c>
+<c>*</c>
+<c>* HALCON13</c>
+<c>*</c>
+<c>* </c>
+<c></c>
+<l>dev_update_off ()</l>
+<l>dev_close_window ()</l>
+<c></c>
+<c>* 時刻を取得</c>
+<l>get_system_time (MSecond, Second, Minute, Hour, Day, YDay, Month, Year)</l>
+<c></c>
+<c>* svm用データファイル　オープン</c>
+<l>open_file ('F:/AMED/ピッキング部画像2/Debug/SVM用特徴量ログ/svm特徴量ログ' + Year + Month + Day + Hour + Minute + Second + '.csv', 'output', FileHandle1)</l>
+<c></c>
+<c>* 以下にPosTop, PosXで使用する定数を記載</c>
+<c>* 認識しきい値</c>
+<l>T_ThreshMin := 160</l>
+<l>T_ThreshMax := 255</l>
+<c>* 認識領域</c>
+<l>T_AreaMin := 500</l>
+<l>T_AreaMax := 99999</l>
+<c>* 認識しきい値</c>
+<l>X_ThreshMin := 0</l>
+<l>X_ThreshMax := 50</l>
+<c></c>
+<c>* svm用データへ書き込み</c>
+<l>fwrite_string (FileHandle1, 'ID' + ',' + 'No.' + ',' + 'T_Circularity' + ',' + 'rect2_Width' + ',' + 'rect2_Height' + ',' + 'rect2_Phi' + ',' + 'Area' + ',' + 'Anisometry' + ',' + 'Bulkiness' + ',' + 'StructureFactor' + ',' + 'Circularity' + ',' + 'Compactness' + ',' + 'Convexity' + ',' + 'Rectangularity' + ',' + 'ContLength' + ',' + 'Ra' + ',' + 'Rb' + ',' + 'Phi' + ',' + 'outer_Radius' + ',' + 'inner_Radius' + ',' + 'inner_Width' + ',' + 'inner_Height' + ',' + 'dist_Mean' + ',' + 'dist_Deviation' + ',' + 'Roundness' + ',' + 'num_Sides' + ',' + 'connect_Num' + ',' + 'holes_Num' + ',' + 'area_Holes' + ',' + 'max_Diameter' + ',' + 'Orientation' + ',' + 'Euler_number' + ',' + 'moments_M11' + ',' + 'moments_M20' + ',' + 'moments_M02' + ',' + 'moments_Ia' + ',' + 'moments_Ib' + ',' + 'moments_M11_invar' + ',' + 'moments_M20_invar' + ',' + 'moments_M02_invar' + ',' + 'moments_Phi1' + ',' + 'moments_Phi2' + ',' + 'moments_M21' + ',' + 'moments_M12' + ',' + 'moments_M03' + ',' + 'moments_M30' + ',' + 'moments_M21_invar' + ',' + 'moments_M12_invar' + ',' + 'moments_M03_invar' + ',' + 'moments_M30_invar' + ',' + 'moments_Psi1' + ',' + 'moments_Psi2' + ',' + 'moments_Psi3' + ',' + 'moments_Psi4' + ',')</l>
+<c>* svm用データへ書き込み(skelton)</c>
+<l>fwrite_string (FileHandle1, 'sk_rect2_Width' + ',' + 'sk_rect2_Height' + ',' + 'sk_rect2_Phi' + ',' + 'sk_Area' + ',' + 'sk_Anisometry' + ',' + 'sk_Bulkiness' + ',' + 'sk_StructureFactor' + ',' + 'sk_Circularity' + ',' + 'sk_Compactness' + ',' + 'sk_Convexity' + ',' + 'sk_Rectangularity' + ',' + 'sk_ContLength' + ',' + 'sk_Ra' + ',' + 'sk_Rb' + ',' + 'sk_Phi' + ',' + 'sk_outer_Radius' + ',' + 'sk_inner_Radius' + ',' + 'sk_inner_Width' + ',' + 'sk_inner_Height' + ',' + 'sk_dist_Mean' + ',' + 'sk_dist_Deviation' + ',' + 'sk_Roundness' + ',' + 'sk_num_Sides' + ',' + 'sk_connect_Num' + ',' + 'sk_holes_Num' + ',' + 'sk_area_Holes' + ',' + 'sk_max_Diameter' + ',' + 'sk_Orientation' + ',' + 'sk_Euler_number' + ',' + 'sk_moments_M11' + ',' + 'sk_moments_M20' + ',' + 'sk_moments_M02' + ',' + 'sk_moments_Ia' + ',' + 'sk_moments_Ib' + ',' + 'sk_moments_M11_invar' + ',' + 'sk_moments_M20_invar' + ',' + 'sk_moments_M02_invar' + ',' + 'sk_moments_Phi1' + ',' + 'sk_moments_Phi2' + ',' + 'sk_moments_M21' + ',' + 'sk_moments_M12' + ',' + 'sk_moments_M03' + ',' + 'sk_moments_M30' + ',' + 'sk_moments_M21_invar' + ',' + 'sk_moments_M12_invar' + ',' + 'sk_moments_M03_invar' + ',' + 'sk_moments_M30_invar' + ',' + 'sk_moments_Psi1' + ',' + 'sk_moments_Psi2' + ',' + 'sk_moments_Psi3' + ',' + 'sk_moments_Psi4' + ',' + 'Class' + '\n')</l>
+<c></c>
+<c>* 背景画像の読み取り</c>
+<l>read_image (BackImage_T, 'F:/AMED/ピッキング部画像/0000_Background/CAM1_background.bmp')</l>
+<l>read_image (BackImage_X, 'F:/AMED/ピッキング部画像/0000_Background/CAM2_background.bmp')</l>
+<c></c>
+<l>get_image_pointer1 (BackImage_T, Pointer, Type, Width, Height)</l>
+<c>* 水平カメラ 画像表示サイズ 1/4 とする</c>
+<l>dev_open_window (0, 0, Width/2, Height/2, 'black', WindowHandle)</l>
+<c>* フォント指定</c>
+<l>set_display_font (WindowHandle, 16, 'mono', 'true', 'false')</l>
+<c>    </c>
+<l>for nCnt := 1 to 45 by 1</l>
+<c>    </c>
+<c>    * CAM1画像をリストの持たせる</c>
+<l>    list_image_files ('F:/AMED/ピッキング部画像2/CAM1/' + nCnt, 'bmp', 'recursive', ImageFiles1)</l>
+<c>    * CAM2画像をリストの持たせる</c>
+<l>    list_image_files ('F:/AMED/ピッキング部画像2/CAM2/' + nCnt, 'bmp', 'recursive', ImageFiles2)</l>
+<c>    </c>
+<c>    </c>
+<l>    for i := 1 to |ImageFiles2| by 1</l>
+<c>        </c>
+<c>        * CAM1画像の読み込み</c>
+<l>        read_image (Image, ImageFiles1[i-1])</l>
+<c>        * CAM1画像から特徴量抽出</c>
+<l>        PosTop (Image, BackImage_T, FileHandle1, Height, Width, T_ThreshMin, T_ThreshMax, T_AreaMin, T_AreaMax, nCnt, i, Circularity)</l>
+<c>        </c>
+<c>        * CAM2画像の読み込み</c>
+<l>        read_image (Image, ImageFiles2[i-1])</l>
+<c>        * CAM2画像から特徴量抽出</c>
+<l>        PosX (Image, BackImage_X, FileHandle1, X_ThreshMin, X_ThreshMax, Circularity)</l>
+<c>        </c>
+<l>    endfor</l>
+<c>    </c>
+<l>endfor</l>
+<c></c>
+<c>* svm用データファイル　クローズ</c>
+<l>close_file (FileHandle1)</l>
+<c></c>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+<procedure name="PosTop">
+<interface>
+<io>
+<par name="Image" base_type="iconic" dimension="0"/>
+<par name="BackImage" base_type="iconic" dimension="0"/>
+</io>
+<ic>
+<par name="FileHandle" base_type="ctrl" dimension="0"/>
+<par name="Height" base_type="ctrl" dimension="0"/>
+<par name="Width" base_type="ctrl" dimension="0"/>
+<par name="ThreshMin" base_type="ctrl" dimension="0"/>
+<par name="ThreshMax" base_type="ctrl" dimension="0"/>
+<par name="AreaMin" base_type="ctrl" dimension="0"/>
+<par name="AreaMax" base_type="ctrl" dimension="0"/>
+<par name="ModelID" base_type="ctrl" dimension="0"/>
+<par name="Number" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="Circularity" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>dev_update_off ()</l>
+<c>* </c>
+<l>DispRow := 110</l>
+<l>DispCol := 20</l>
+<c></c>
+<l>gen_rectangle1 (Rectangle, 70, 100, Height-100, Width-100)</l>
+<c>* </c>
+<c>* </c>
+<c>* 背景との差分をとる</c>
+<l>sub_image (Image, BackImage, ImageSub, 1, 128)</l>
+<c>* </c>
+<c>* カラー画像を各色に分ける</c>
+<l>decompose3 (ImageSub, R, G, B)</l>
+<c>* </c>
+<c>* 認識範囲</c>
+<l>reduce_domain (B, Rectangle, ImageReduced)</l>
+<c>* </c>
+<l>threshold (ImageReduced, Region, ThreshMin, ThreshMax)</l>
+<c>* </c>
+<c></c>
+<l>connection (Region, ConnectedRegions)</l>
+<c>* </c>
+<l>select_shape (ConnectedRegions, SelectedRegions, 'area', 'and', AreaMin, AreaMax)</l>
+<c>* </c>
+<l>union1 (SelectedRegions, RegionUnion)</l>
+<c>* </c>
+<c>* 円フィッティング</c>
+<l>opening_circle (Region, RegionOpening, 3.5)</l>
+<l>boundary (RegionOpening, RegionBorder, 'inner')</l>
+<l>circularity (RegionOpening, Circularity)</l>
+<c>* </c>
+<c></c>
+<l>fwrite_string (FileHandle, ModelID + ',' + Number + ',' + Circularity + ',')</l>
+<c></c>
+<c></c>
+<l>return ()</l>
+</body>
+<docu id="PosTop">
+<short lang="ja_JP">姿勢制御 上部カメラ用 画像処理</short>
+<parameters>
+<parameter id="AreaMax"/>
+<parameter id="AreaMin"/>
+<parameter id="BackImage"/>
+<parameter id="Circularity"/>
+<parameter id="FileHandle"/>
+<parameter id="Height"/>
+<parameter id="Image">
+<description lang="ja_JP">カメラ画像</description>
+<multivalue>false</multivalue>
+<sem_type>object</sem_type>
+</parameter>
+<parameter id="ModelID"/>
+<parameter id="Number"/>
+<parameter id="ThreshMax"/>
+<parameter id="ThreshMin"/>
+<parameter id="Width"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="PosX">
+<interface>
+<io>
+<par name="Image" base_type="iconic" dimension="0"/>
+<par name="BackImage" base_type="iconic" dimension="0"/>
+</io>
+<ic>
+<par name="FileHandle" base_type="ctrl" dimension="0"/>
+<par name="ThreshMin" base_type="ctrl" dimension="0"/>
+<par name="ThreshMax" base_type="ctrl" dimension="0"/>
+<par name="cnt" base_type="ctrl" dimension="0"/>
+</ic>
+</interface>
+<body>
+<l>dev_update_off ()</l>
+<c>* </c>
+<c></c>
+<c>* 認識範囲作成</c>
+<l>gen_rectangle1 (Rectangle, 320, 140, 800, 1100)</l>
+<c></c>
+<c>* 背景との差分をとる</c>
+<l>sub_image (Image, BackImage, ImageSub, 10, 128)</l>
+<c></c>
+<c>* ノズル部分のXLDデータ読み込み</c>
+<l>read_contour_xld_dxf (Contours, 'F:/AMED/ピッキング部画像/Nozzle/X_Nozzle.dxf', [], [], DxfStatus)</l>
+<c>* </c>
+<c>* カラー画像を各色に分ける</c>
+<l>decompose3 (ImageSub, R, G, B)</l>
+<c>*</c>
+<c>* ノズル領域を塗りつぶす</c>
+<l>paint_xld (Contours, R, ImageResult, 255)</l>
+<c>* </c>
+<c>* 認識範囲設定</c>
+<l>reduce_domain (ImageResult, Rectangle, ImageReduced)</l>
+<c>* </c>
+<l>threshold (ImageReduced, Region, ThreshMin, ThreshMax)</l>
+<c>* </c>
+<c>*</c>
+<l>opening_circle (Region, RegionOpening, 3.5)</l>
+<l>boundary (RegionOpening, RegionBorder, 'inner')</l>
+<c>* </c>
+<l>connection (Region, ConnectedRegions)</l>
+<c>* </c>
+<c></c>
+<l>select_shape_std (ConnectedRegions, SelectedRegions, 'max_area', 70)</l>
+<c>* </c>
+<l>dev_set_draw ('fill')</l>
+<l>fill_up (SelectedRegions, RegionFillUp)</l>
+<c>* RegionFillUpの形状特徴量を取得</c>
+<l>area_center (RegionFillUp, Area, Row, Column)</l>
+<l>smallest_rectangle2 (RegionFillUp, Row1, Column1, rect2_Phi, rect2_Width, rect2_Height)</l>
+<l>eccentricity (RegionFillUp, Anisometry, Bulkiness, StructureFactor)</l>
+<l>circularity (RegionFillUp, Circularity)</l>
+<l>compactness (RegionFillUp, Compactness)</l>
+<l>convexity (RegionFillUp, Convexity)</l>
+<l>rectangularity (RegionFillUp, Rectangularity)</l>
+<l>contlength (RegionFillUp, ContLength)</l>
+<l>elliptic_axis (RegionFillUp, Ra, Rb, Phi)</l>
+<l>smallest_circle (RegionFillUp, Row2, Column2, outer_Radius)</l>
+<l>inner_circle (RegionFillUp, Row3, Column3, inner_Radius)</l>
+<l>inner_rectangle1 (RegionFillUp, Row11, Column11, Row21, Column21)</l>
+<l>inner_Width := Row21 - Row11</l>
+<l>inner_Height := Column21 - Column11</l>
+<l>roundness (RegionFillUp, dist_Mean, dist_Deviation, Roundness, num_Sides)</l>
+<l>connect_and_holes (RegionFillUp, connect_Num, holes_Num)</l>
+<l>area_holes (RegionFillUp, area_Holes)</l>
+<l>diameter_region (RegionFillUp, Row12, Column12, Row22, Column22, max_Diameter)</l>
+<l>orientation_region (RegionFillUp, Orientation)</l>
+<l>euler_number (RegionFillUp, Euler_number)</l>
+<l>moments_region_2nd (RegionFillUp, moments_M11, moments_M20, moments_M02, moments_Ia, moments_Ib)</l>
+<l>moments_region_2nd_invar (RegionFillUp, moments_M11_invar, moments_M20_invar, moments_M02_invar)</l>
+<l>moments_region_2nd_rel_invar (RegionFillUp, moments_Phi1, moments_Phi2)</l>
+<l>moments_region_3rd (RegionFillUp, moments_M21, moments_M12, moments_M03, moments_M30)</l>
+<l>moments_region_3rd_invar (RegionFillUp, moments_M21_invar, moments_M12_invar, moments_M03_invar, moments_M30_invar)</l>
+<l>moments_region_central (RegionFillUp, moments_I1, moments_I2, moments_I3, moments_I4)</l>
+<l>moments_region_central_invar (RegionFillUp, moments_Psi1, moments_Psi2, moments_Psi3, moments_Psi4)</l>
+<c></c>
+<c>* skeletonの形状特徴量</c>
+<l>skeleton (RegionFillUp, Skeleton)</l>
+<l>area_center (Skeleton, sk_Area, Row4, Column4)</l>
+<l>smallest_rectangle2 (Skeleton, Row5, Column5, sk_rect2_Phi, sk_rect2_Width, sk_rect2_Height)</l>
+<l>eccentricity (Skeleton, sk_Anisometry, sk_Bulkiness, sk_StructureFactor)</l>
+<l>circularity (Skeleton, sk_Circularity)</l>
+<l>compactness (Skeleton, sk_Compactness)</l>
+<l>convexity (Skeleton, sk_Convexity)</l>
+<l>rectangularity (Skeleton, sk_Rectangularity)</l>
+<l>contlength (Skeleton, sk_ContLength)</l>
+<l>elliptic_axis (Skeleton, sk_Ra, sk_Rb, sk_Phi)</l>
+<l>smallest_circle (Skeleton, Row6, Column6, sk_outer_Radius)</l>
+<l>inner_circle (Skeleton, Row7, Column7, sk_inner_Radius)</l>
+<l>inner_rectangle1 (Skeleton, Row13, Column13, Row23, Column23)</l>
+<l>sk_inner_Width := Row23 - Row13</l>
+<l>sk_inner_Height := Column23 - Column13</l>
+<l>roundness (Skeleton, sk_dist_Mean, sk_dist_Deviation, sk_Roundness, sk_num_Sides)</l>
+<l>connect_and_holes (Skeleton, sk_connect_Num, sk_holes_Num)</l>
+<l>area_holes (Skeleton, sk_area_Holes)</l>
+<l>diameter_region (Skeleton, Row14, Column14, Row24, Column24, sk_max_Diameter)</l>
+<l>orientation_region (Skeleton, sk_Orientation)</l>
+<l>euler_number (Skeleton, sk_Euler_number)</l>
+<l>moments_region_2nd (Skeleton, sk_moments_M11, sk_moments_M20, sk_moments_M02, sk_moments_Ia, sk_moments_Ib)</l>
+<l>moments_region_2nd_invar (Skeleton, sk_moments_M11_invar, sk_moments_M20_invar, sk_moments_M02_invar)</l>
+<l>moments_region_2nd_rel_invar (Skeleton, sk_moments_Phi1, sk_moments_Phi2)</l>
+<l>moments_region_3rd (Skeleton, sk_moments_M21, sk_moments_M12, sk_moments_M03, sk_moments_M30)</l>
+<l>moments_region_3rd_invar (Skeleton, sk_moments_M21_invar, sk_moments_M12_invar, sk_moments_M03_invar, sk_moments_M30_invar)</l>
+<l>moments_region_central (Skeleton, sk_moments_I1, sk_moments_I2, sk_moments_I3, sk_moments_I4)</l>
+<l>moments_region_central_invar (Skeleton, sk_moments_Psi1, sk_moments_Psi2, sk_moments_Psi3, sk_moments_Psi4)</l>
+<c></c>
+<c></c>
+<c>* svm用データへ書き込み</c>
+<l>fwrite_string (FileHandle, rect2_Width + ',' + rect2_Height + ',' + rect2_Phi + ',' + Area + ',' + Anisometry + ',' + Bulkiness + ',' + StructureFactor + ',' + Circularity + ',' + Compactness + ',' + Convexity + ',' + Rectangularity + ',' + ContLength + ',' + Ra + ',' + Rb + ',' + Phi + ',' + outer_Radius + ',' + inner_Radius + ',' + inner_Width + ',' + inner_Height + ',' + dist_Mean + ',' + dist_Deviation + ',' + Roundness + ',' + num_Sides + ',' + connect_Num + ',' + holes_Num + ',' + area_Holes + ',' + max_Diameter + ',' + Orientation + ',' + Euler_number + ',' + moments_M11 + ',' + moments_M20 + ',' + moments_M02 + ',' + moments_Ia + ',' + moments_Ib + ',' + moments_M11_invar + ',' + moments_M20_invar + ',' + moments_M02_invar + ',' + moments_Phi1 + ',' + moments_Phi2 + ',' + moments_M21 + ',' + moments_M12 + ',' + moments_M03 + ',' + moments_M30 + ',' + moments_M21_invar + ',' + moments_M12_invar + ',' + moments_M03_invar + ',' + moments_M30_invar + ',' + moments_Psi1 + ',' + moments_Psi2 + ',' + moments_Psi3 + ',' + moments_Psi4 + ',')</l>
+<l>fwrite_string (FileHandle, sk_rect2_Width + ',' + sk_rect2_Height + ',' + sk_rect2_Phi + ',' + sk_Area + ',' + sk_Anisometry + ',' + sk_Bulkiness + ',' + sk_StructureFactor + ',' + sk_Circularity + ',' + sk_Compactness + ',' + sk_Convexity + ',' + sk_Rectangularity + ',' + sk_ContLength + ',' + sk_Ra + ',' + sk_Rb + ',' + sk_Phi + ',' + sk_outer_Radius + ',' + sk_inner_Radius + ',' + sk_inner_Width + ',' + sk_inner_Height + ',' + sk_dist_Mean + ',' + sk_dist_Deviation + ',' + sk_Roundness + ',' + sk_num_Sides + ',' + sk_connect_Num + ',' + sk_holes_Num + ',' + sk_area_Holes + ',' + sk_max_Diameter + ',' + sk_Orientation + ',' + sk_Euler_number + ',' + sk_moments_M11 + ',' + sk_moments_M20 + ',' + sk_moments_M02 + ',' + sk_moments_Ia + ',' + sk_moments_Ib + ',' + sk_moments_M11_invar + ',' + sk_moments_M20_invar + ',' + sk_moments_M02_invar + ',' + sk_moments_Phi1 + ',' + sk_moments_Phi2 + ',' + sk_moments_M21 + ',' + sk_moments_M12 + ',' + sk_moments_M03 + ',' + sk_moments_M30 + ',' + sk_moments_M21_invar + ',' + sk_moments_M12_invar + ',' + sk_moments_M03_invar + ',' + sk_moments_M30_invar + ',' + sk_moments_Psi1 + ',' + sk_moments_Psi2 + ',' + sk_moments_Psi3 + ',' + sk_moments_Psi4 + '\n')</l>
+<c></c>
+<l>return ()</l>
+<c>* </c>
+</body>
+<docu id="PosX">
+<parameters>
+<parameter id="BackImage"/>
+<parameter id="FileHandle"/>
+<parameter id="Image">
+<multivalue>false</multivalue>
+<sem_type>object</sem_type>
+</parameter>
+<parameter id="ThreshMax"/>
+<parameter id="ThreshMin"/>
+<parameter id="cnt"/>
+</parameters>
+</docu>
+</procedure>
+</hdevelop>
